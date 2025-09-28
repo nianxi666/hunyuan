@@ -1,0 +1,9 @@
+build:
+  cuda_version: "12.8"
+  python_version: "3.12"
+  system_packages:
+    - "git"
+  python_packages:
+    - "transformers"
+  run:
+    - "git clone https://github.com/nianxi666/HunyuanImage-3.0"
