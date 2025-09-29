@@ -14,13 +14,13 @@ image = (
     modal.Image.from_registry(
         "nvidia/cuda:12.1.1-devel-ubuntu22.04"
     )
-    # [已修正] 直接将包名作为参数传递，而不是使用 "packages" 关键字
+    # [已修正] 安装 python-is-python3 来创建 python -> python3 的符号链接
+    .apt_install("git", "curl", "python-is-python3")
     .micromamba_install(
         "python=3.12",
         "pip",
         channels=["conda-forge"],
     )
-    .apt_install("git", "curl")
     .run_commands(
         "pip install --upgrade pip setuptools wheel",
         "pip install packaging",
