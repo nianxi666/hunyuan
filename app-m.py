@@ -32,6 +32,8 @@ image = (
         "dashscope",
         "peft",
         "requests",
+        "flashinfer-python"
+        "packaging"
     )
 )
 
