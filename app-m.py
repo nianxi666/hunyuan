@@ -10,18 +10,23 @@ APP_DIR = "/app"
 app = modal.App(APP_NAME)
 
 # 定义环境镜像
-# [最终修正] 更换为包含完整 CUDA 开发工具包 (nvcc) 的 NVIDIA 官方镜像
 image = (
     modal.Image.from_registry(
-        "nvidia/cuda:12.1.1-devel-ubuntu22.04",
-        setup_python=True,
-        python_version="3.10",
+        "nvidia/cuda:12.1.1-devel-ubuntu22.04"
+    )
+    # [已修正] 使用 Micromamba 创建一个独立的 Python 3.12 环境
+    .micromamba_install(
+        channels=["conda-forge"],
+        packages=["python=3.12", "pip"],
     )
     .apt_install("git", "curl")
     .run_commands(
+        # 确保 pip 和基础构建工具是最新版本
+        "pip install --upgrade pip setuptools wheel",
         "pip install packaging",
+        # 安装与 Python 3.12 兼容的 PyTorch
         "pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128",
-        # 在这个镜像中，CUDA_HOME 通常是预设好的，但为了保险起见我们仍然显式指定它
+        # 安装 flash-attn
         "CUDA_HOME=/usr/local/cuda pip install flash-attn==2.8.3 --no-build-isolation",
     )
     .pip_install(
@@ -55,14 +60,18 @@ def run_command_in_container(command: str):
     """在 Modal 容器内执行指定的 shell 命令。"""
     print(f"准备执行命令: '{command}'")
     try:
+        # 确保命令在 micromamba 环境中执行
+        # Modal 会自动处理，但为了保险，可以加上 micromamba run
+        full_command = f'/opt/conda/bin/micromamba run -n base {command}'
         process = subprocess.run(
-            command,
+            full_command,
             shell=True,
             check=True,
             cwd=APP_DIR,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            executable='/bin/bash' # 指定 shell
         )
         print("--- 命令输出 ---")
         print(process.stdout)
