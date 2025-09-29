@@ -12,25 +12,27 @@ app = modal.App(APP_NAME)
 # Define the environment image
 image = (
     # Start with a standard Modal image that has Python 3.12 configured correctly.
+    # This is based on Debian 12 (Bookworm).
     modal.Image.debian_slim(python_version="3.12")
     # Install dependencies needed for adding the NVIDIA repository and building packages.
     .apt_install("git", "curl", "wget", "gnupg")
     .run_commands(
         # === Install NVIDIA CUDA Development Toolkit ===
         # This section manually adds the NVIDIA repository and installs the compiler (nvcc).
-        "wget https://developer.download.nvidia.com/compute/cuda/repos/debian11/x86_64/cuda-keyring_1.1-1_all.deb",
+        # --- MODIFIED: Changed the repository from debian11 to debian12 to match the base image ---
+        "wget https://developer.download.nvidia.com/compute/cuda/repos/debian12/x86_64/cuda-keyring_1.1-1_all.deb",
         "dpkg -i cuda-keyring_1.1-1_all.deb",
         "apt-get update",
-        # --- MODIFIED: Changed CUDA toolkit version to 12.8 ---
+        # Now it can find the correct package in the debian12 repository
         "apt-get -y install cuda-toolkit-12-8",
         # === End of CUDA Install ===
 
         # Now, proceed with Python package installation.
         "pip install --upgrade pip setuptools wheel",
         "pip install packaging",
-        # This PyTorch version is already compatible with CUDA 12.8
+        # This PyTorch version is already compatible with CUDA 12.8 (cu128)
         "pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128",
-        # --- MODIFIED: Updated CUDA_HOME to point to the 12.8 toolkit ---
+        # --- MODIFIED: Updated CUDA_HOME to point to the correct 12.8 toolkit path ---
         "CUDA_HOME=/usr/local/cuda-12.8 pip install flash-attn==2.8.3 --no-build-isolation",
     )
     .pip_install(
