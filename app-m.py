@@ -1,31 +1,35 @@
 import subprocess
 import modal
 
-# --- 配置 ---
+# --- Configuration ---
 VOLUME_NAME = "my-notebook-volume"
 APP_NAME = "interactive-app"
 APP_DIR = "/app"
 
-# --- Modal App 设置 ---
+# --- Modal App Setup ---
 app = modal.App(APP_NAME)
 
-# 定义环境镜像
+# Define the environment image
 image = (
-    modal.Image.from_registry(
-        "nvidia/cuda:12.1.1-devel-ubuntu22.04"
-    )
-    # [已修正] 安装 python-is-python3 来创建 python -> python3 的符号链接
-    .apt_install("git", "curl", "python-is-python3")
-    .micromamba_install(
-        "python=3.12",
-        "pip",
-        channels=["conda-forge"],
-    )
+    # Start with a standard Modal image that has Python 3.12 configured correctly.
+    modal.Image.debian_slim(python_version="3.12")
+    # Install dependencies needed for adding the NVIDIA repository and building packages.
+    .apt_install("git", "curl", "wget", "gnupg")
     .run_commands(
+        # === Install NVIDIA CUDA Development Toolkit ===
+        # This section manually adds the NVIDIA repository and installs the compiler (nvcc).
+        "wget https://developer.download.nvidia.com/compute/cuda/repos/debian11/x86_64/cuda-keyring_1.1-1_all.deb",
+        "dpkg -i cuda-keyring_1.1-1_all.deb",
+        "apt-get update",
+        "apt-get -y install cuda-toolkit-12-1",
+        # === End of CUDA Install ===
+
+        # Now, proceed with Python package installation.
         "pip install --upgrade pip setuptools wheel",
         "pip install packaging",
         "pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128",
-        "CUDA_HOME=/usr/local/cuda pip install flash-attn==2.8.3 --no-build-isolation",
+        # Set CUDA_HOME to the correct path for the toolkit we just installed.
+        "CUDA_HOME=/usr/local/cuda-12.1 pip install flash-attn==2.8.3 --no-build-isolation",
     )
     .pip_install(
         "einops>=0.8.0",
@@ -44,10 +48,10 @@ image = (
     )
 )
 
-# 从统一名称创建或获取持久化存储卷
+# Create or get a persistent storage volume
 volume = modal.Volume.from_name(VOLUME_NAME, create_if_missing=True)
 
-# --- Modal 函数定义 ---
+# --- Modal Function Definition ---
 @app.function(
     image=image,
     volumes={APP_DIR: volume},
@@ -55,8 +59,8 @@ volume = modal.Volume.from_name(VOLUME_NAME, create_if_missing=True)
     timeout=3600,
 )
 def run_command_in_container(command: str):
-    """在 Modal 容器内执行指定的 shell 命令。"""
-    print(f"准备执行命令: '{command}'")
+    """Executes a shell command inside the Modal container."""
+    print(f"Preparing to execute command: '{command}'")
     try:
         process = subprocess.run(
             command,
@@ -67,22 +71,22 @@ def run_command_in_container(command: str):
             stderr=subprocess.PIPE,
             text=True,
         )
-        print("--- 命令输出 ---")
+        print("--- Command Output ---")
         print(process.stdout)
         if process.stderr:
-            print("--- 错误输出 ---")
+            print("--- Error Output ---")
             print(process.stderr)
-        print("\n命令执行成功。")
+        print("\nCommand executed successfully.")
     except subprocess.CalledProcessError as e:
-        print(f"\n命令执行失败，返回码: {e.returncode}")
-        print("--- 命令输出 ---")
+        print(f"\nCommand failed with return code: {e.returncode}")
+        print("--- Command Output ---")
         print(e.stdout)
-        print("--- 错误输出 ---")
+        print("--- Error Output ---")
         print(e.stderr)
 
-# --- CLI 入口点 ---
+# --- CLI Entrypoint ---
 @app.local_entrypoint()
 def main(command: str):
-    """本地入口点，用于触发远程 Modal 函数执行命令。"""
-    print(f"正在通过 Modal 远程执行命令: '{command}'")
+    """Local entrypoint to trigger the remote Modal function."""
+    print(f"Remotely executing command via Modal: '{command}'")
     run_command_in_container.remote(command)
