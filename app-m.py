@@ -21,7 +21,7 @@ image = (
         "wget https://developer.download.nvidia.com/compute/cuda/repos/debian11/x86_64/cuda-keyring_1.1-1_all.deb",
         "dpkg -i cuda-keyring_1.1-1_all.deb",
         "apt-get update",
-        "apt-get -y install cuda-toolkit-12-1",
+        "apt-get -y install cuda-toolkit-12-8",
         # === End of CUDA Install ===
 
         # Now, proceed with Python package installation.
@@ -29,7 +29,7 @@ image = (
         "pip install packaging",
         "pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128",
         # Set CUDA_HOME to the correct path for the toolkit we just installed.
-        "CUDA_HOME=/usr/local/cuda-12.1 pip install flash-attn==2.8.3 --no-build-isolation",
+        "CUDA_HOME=/usr/local/cuda-12.8 pip install flash-attn==2.8.3 --no-build-isolation",
     )
     .pip_install(
         "einops>=0.8.0",
