@@ -18,7 +18,7 @@ image = (
     .run_commands(
         # === Install NVIDIA CUDA Development Toolkit ===
         # This section manually adds the NVIDIA repository and installs the compiler (nvcc).
-        "wget https://developer.download.nvidia.com/compute/cuda/repos/debian11/x86_64/cuda-keyring_1.1-1_all.deb",
+        "wget https://developer.download.nvidia.com/compute/cuda/repos/debian12/amd64/cuda-keyring_1.1-1_all.deb",
         "dpkg -i cuda-keyring_1.1-1_all.deb",
         "apt-get update",
         "apt-get -y install cuda-toolkit-12-8",
