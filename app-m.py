@@ -10,13 +10,18 @@ APP_DIR = "/app"
 app = modal.App(APP_NAME)
 
 # 定义环境镜像
+# [最终修正] 更换为包含完整 CUDA 开发工具包 (nvcc) 的 NVIDIA 官方镜像
 image = (
-    modal.Image.debian_slim(python_version="3.10")
+    modal.Image.from_registry(
+        "nvidia/cuda:12.1.1-devel-ubuntu22.04",
+        setup_python=True,
+        python_version="3.10",
+    )
     .apt_install("git", "curl")
     .run_commands(
         "pip install packaging",
         "pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128",
-        # [已修正] 在编译前指定 CUDA_HOME 环境变量
+        # 在这个镜像中，CUDA_HOME 通常是预设好的，但为了保险起见我们仍然显式指定它
         "CUDA_HOME=/usr/local/cuda pip install flash-attn==2.8.3 --no-build-isolation",
     )
     .pip_install(
