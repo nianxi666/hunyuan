@@ -14,12 +14,10 @@ image = (
     modal.Image.debian_slim(python_version="3.10")
     .apt_install("git", "curl")
     .run_commands(
-        # [已修正] 先安装 packaging 库，为 flash-attn 的安装做准备
         "pip install packaging",
-        # 安装指定 CUDA 版本的 PyTorch
         "pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128",
-        # 现在再安装 flash-attn 就不会出错了
-        "pip install flash-attn==2.8.3 --no-build-isolation",
+        # [已修正] 在编译前指定 CUDA_HOME 环境变量
+        "CUDA_HOME=/usr/local/cuda pip install flash-attn==2.8.3 --no-build-isolation",
     )
     .pip_install(
         "einops>=0.8.0",
