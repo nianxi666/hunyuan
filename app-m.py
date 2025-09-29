@@ -16,8 +16,7 @@ image = (
     # Install dependencies needed for adding the NVIDIA repository and building packages.
     .apt_install("git", "curl", "wget", "gnupg")
     .run_commands(
-        "pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128 && pip install flash-attn==2.8.3 --no-build-isolation
- && pip install flashinfer-python",
+        "pip install torch==2.7.1 torchvision==0.22.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128 && pip install flash-attn==2.8.3 --no-build-isolation && pip install flashinfer-python",
     )
     .pip_install(
         "einops>=0.8.0",
